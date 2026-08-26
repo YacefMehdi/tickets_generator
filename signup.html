@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="style.css">
+        <title> Sign up page</title>
+    </head>
+    <body>
+        <form>
+            <label for="username">Nom d'utilisateur</label>
+            <input id="username" type="text" placeholder="Choisir votre nom d'utilisateur">
+            <label for="password">Mot de passe</label>
+            <div class="password-wrapper">
+                <input id="password" type="password" placeholder="Choisir votre mot de passe">
+                <span id="toggle-password" style="cursor: pointer;">👁</span>
+            </div>
+            <label for="confirm-password">Confirmer le mot de passe</label>
+            <div class="confirm-password-wrapper">
+                <input id="confirm-password" type="password" placeholder="Confirmer votre mot de passe">
+                <span id="toggle-confirm-password" style="cursor: pointer;">👁</span>
+            </div>
+            <button type="submit">S'inscrire</button>
+            <div id="error-message"></div>
+        </form>
+        <script src="signup.js"></script>
+    </body>
+</html>

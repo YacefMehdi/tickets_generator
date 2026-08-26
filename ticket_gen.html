@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="style.css">
+        <title>générateur de tickets</title>
+    </head>
+    <body>
+       <form> 
+        <label for="name"> Nom du demandeur</label>
+        <input id="name" type="text" placeholder="Entrer votre nom">
+        <label for="title"> Titre du problème</label>
+        <input id="title" type="text" placeholder="Quelle est le titre du problème"><br>
+        <label for="description"> Description détaillée</label>
+        <textarea id="description" rows="10" cols="30" placeholder="décrivez le problème en détail"></textarea><br>
+        <label for="priority"> Priorité</label>
+        <select id="priority">
+            <option value="Basse">Basse</option>
+            <option value="Normale">Normale</option>
+            <option value="Haute">Haute</option>
+        </select>
+        <button type="submit">Soumettre</button>
+        <div id="error-message"></div>
+        <div id="success-message"></div>
+        </form>
+        <script src="ticket_gen.js"></script>
+    </body>
+</html>

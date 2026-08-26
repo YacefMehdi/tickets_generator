@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="style.css">
+        <title> Login page</title>
+    </head>
+    <body>
+        <form>
+            <label for="username">Nom d'utilisateur</label>
+            <input id="username" type="text" placeholder="Enter votre nom d'utilisateur">
+            <label for="password">Mot de passe</label>
+            <div class="password-wrapper">
+                <input id="password" type="password" placeholder="Enter votre mot de passe">
+                <span id="toggle-password" style="cursor: pointer;">👁</span>
+            </div>
+        <button type="submit">Se connecter</button>
+        <div id="error-message"></div>
+        </form>
+        <script src="login.js"></script>
+    </body>
+</html>    
