@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <link rel="stylesheet" href="style.css">
+        <title>Mes tickets</title>
+    </head>
+    <body>
+        
+        <nav class="nav">
+         <a href="submit-ticket.html" id="new-ticket-nav">Prendre un ticket</a>
+         <a href="my-tickets.html" id="my-tickets-nav">Voir mes tickets</a>
+         <button type="button" id="logout-btn">Se déconnecter</button>
+       </nav>
+       <nav class="nav" id="admin-stats" style="display: none;">
+           <div class="stats-container">
+               <strong>Total tickets :</strong><span id="total-tickets"></span>
+               <strong>Nouveaux tickets :</strong><span id="new-tickets"></span>
+               <strong>Tickets en cours :</strong><span id="in-progress-tickets"></span>
+               <strong>Tickets résolus :</strong><span id="resolved-tickets"></span>
+            </div>
+        </nav>  
+       <div id="tickets-container">
+            <h2>Mes tickets</h2>
+            <table id="tickets-table">
+                <thead>
+                    <tr>
+                        <th id="username-col" style="display: none;">Username</th>
+                        <th id="id-col">ID</th>             
+                        <th id="title-col">Titre</th>         
+                        <th id="description-col">Description</th> 
+                        <th id="priority-col">Priorité</th>    
+                        <th id="date-col">Date</th> 
+                        <th id="state-col">Statut</th>        
+                    </tr>
+                </thead>
+                <tbody id="ticket-table-body"></tbody>
+            </table>
+            <div id="no-tickets-message"></div>
+       </div>   
+       <div class="modal" id="details-ticket">
+    <div class="modal-content">
+        <h2>Details du ticket</h2>
+        <p><strong id="details-username-label" style="display: none;">Username: </strong><span id="details-username" style="display: none;"></span></p>
+        <p><strong>ID: </strong><span id="details-id"></span></p>
+        <p><strong>Titre: </strong><span id="details-title"></span></p>
+        <p><strong>Description: </strong><span id="details-description"></span></p>
+        <p><strong>Priorité: </strong><span id="details-priority"></span></p>
+        <p><strong>Date: </strong><span id="details-date"></span></p>
+        <p><strong>Statut: </strong><span id="details-state"></span>
+    <select id="admin-state" style="display: none;"> 
+        <option value="Nouveau">Nouveau</option>
+        <option value="En cours">En cours</option>
+        <option value="Résolu">Résolu</option>
+    </select>
+    </p>
+    <p>
+        <strong>Note du support: </strong>
+        <textarea id="admin-note" rows="4" style="display: none;"></textarea>
+        <span id="details-note" style="display: none;"></span>
+    </p>
+    <div id="error-message" style="color: red; display: none;"></div>
+    <div id="success-message" style="color: green; display: none;"></div>
+    <button type="button" id="save-note-btn" style="display: none;">Enregistrer la note</button>
+    <button type="button" id="close-details-btn">Fermer</button>
+    </div> 
+       </div> 
+       <script src="my-tickets.js"></script>
+    </body>
+</html> 

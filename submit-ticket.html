@@ -6,9 +6,12 @@
         <title>générateur de tickets</title>
     </head>
     <body>
+       <nav class="nav">
+         <a href="submit-ticket.html" id="new-ticket-nav">Prendre un ticket</a>
+         <a href="my-tickets.html" id="my-tickets-nav">Voir mes tickets</a>
+         <button type="button" id="logout-btn">Se déconnecter</button>
+       </nav>  
        <form> 
-        <label for="name"> Nom du demandeur</label>
-        <input id="name" type="text" placeholder="Entrer votre nom">
         <label for="title"> Titre du problème</label>
         <input id="title" type="text" placeholder="Quelle est le titre du problème"><br>
         <label for="description"> Description détaillée</label>
@@ -23,6 +26,6 @@
         <div id="error-message"></div>
         <div id="success-message"></div>
         </form>
-        <script src="ticket_gen.js"></script>
+        <script src="submit-ticket.js"></script>
     </body>
 </html>

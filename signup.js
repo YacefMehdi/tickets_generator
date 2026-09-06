@@ -32,7 +32,7 @@ function getPasswordError(password) {
     if (!/[0-9]/.test(password)) {
         return "Le mot de passe doit contenir au moins un chiffre.";
     }
-    if (!/[!@#$%&*|~]/.test(password)) {
+    if (!/[!@#$%&*|~?-]/.test(password)) {
         return "Le mot de passe doit contenir au moins un caractère spécial.";
     }
     return null;
@@ -44,21 +44,24 @@ signupForm.addEventListener("submit", function (event) {
     const username = usernameInput.value;
     const password = passwordInput.value;
     const confirmPassword = confirmPasswordInput.value;
-    
+
     if (username === "" || password === "" || confirmPassword === "") {
-    errorMessage.textContent = "Veuillez remplir tous les champs.";
-    return;
+        errorMessage.textContent = "Veuillez remplir tous les champs.";
+        errorMessage.style.display = "block";
+        return;
     }
 
     if (password !== confirmPassword) {
         errorMessage.textContent = "Les mots de passe ne correspondent pas.";
+        errorMessage.style.display = "block";
         return;
     }
-    
+
     const passwordError = getPasswordError(password);
     if (passwordError) {
-    errorMessage.textContent = passwordError;
-    return;
+        errorMessage.textContent = passwordError;
+        errorMessage.style.display = "block";
+        return;
     }
 
     fetch("http://127.0.0.1:8000/signup", {
@@ -66,13 +69,14 @@ signupForm.addEventListener("submit", function (event) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username: username, password: password })
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.status === "error") {
-            errorMessage.textContent = data.message;
-        } else {
-            window.location.href = "login.html";
-        }
-    })
-    .catch(error => console.error("Error:", error));
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === "error") {
+                errorMessage.textContent = data.message;
+                errorMessage.style.display = "block";
+            } else {
+                window.location.href = "login.html";
+            }
+        })
+        .catch(error => console.error("Error:", error));
 });
