@@ -6,6 +6,7 @@ import bcrypt
 import sqlite3
 import jwt
 from datetime import datetime, timedelta
+import base64
 
 SECRET_KEY = "mon_super_secret_cle_a_changer"
 ALGORITHM = "HS256"
@@ -23,7 +24,7 @@ class Ticket(BaseModel):
     description: str
     priority: str
     state: str
-    image: bytes = None
+    image: str = None
 
 @app.post("/submit-ticket")
 def submit_ticket(ticket: Ticket, authorization: str = Header(None)):
@@ -60,7 +61,11 @@ def submit_ticket(ticket: Ticket, authorization: str = Header(None)):
             image BLOB
         )
     """)
-    cursor.execute("INSERT INTO tickets (username, title, description, priority, timestamp, state, image) VALUES (?, ?, ?, ?, ?, ?, ?)", (username, ticket.title, ticket.description, ticket.priority, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Nouveau", ticket.image))
+    image_bytes = base64.b64decode(ticket.image) if ticket.image else None
+    cursor.execute(
+        "INSERT INTO tickets (username, title, description, priority, timestamp, state, image) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        (username, ticket.title, ticket.description, ticket.priority, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Nouveau", image_bytes)
+    )
     conn.commit()
     conn.close()
 
@@ -223,3 +228,31 @@ def add_note(ticket: dict, authorization: str = Header(None)):
     conn.commit()
     conn.close()
     return {"status": "success", "message": "Note added successfully"}
+
+@app.get("/ticket-image/{id}")
+def get_image(id: int, authorization: str = Header(None)):
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Not authentificated")
+    
+    token = authorization.removeprefix("Bearer ")
+    try:
+        jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except jwt.InvalidTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    
+    conn = sqlite3.connect("users.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT image FROM tickets WHERE id = ?", (id,))
+    row = cursor.fetchone()
+    conn.close()
+
+    if row is None:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+
+    if row[0] is None:
+        return {"status": "success", "image": None}
+
+    image = base64.b64encode(row[0]).decode("utf-8")
+    return {"status": "success", "image": image}

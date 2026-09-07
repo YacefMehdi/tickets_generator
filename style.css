@@ -16,9 +16,9 @@ body {
     color: var(--ink);
     font-family: "Aptos", "Trebuchet MS", sans-serif;
     background-color: #0b1324;
-    background-image: linear-gradient(120deg, #0b1324 0%, #173b50 30%, #147d80 52%, #e76f51 70%, #0b1324 100%);
+    background-image: linear-gradient(120deg, #fe008c 0%, #173b50 30%, #147d80 52%, #51e797 70%, #e30cd5 100%);
     background-size: 240% 240%;
-    animation: atmosphere 3s ease-in-out infinite alternate;
+    animation: atmosphere 2s ease-in-out alternate infinite;
 }
 
 /* ---------- Nav ---------- */
@@ -343,7 +343,14 @@ form button:focus-visible, .nav button:focus-visible {
     background: var(--teal-dark);
     transform: translateY(-1px);
 }
-
+#image-attach{
+    height: 20px;
+    padding-bottom: 0px;
+    border-radius: 10px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-align: center;
+}
 
 #close-details-btn {
     display: block;

@@ -20,14 +20,13 @@ document.querySelector("form").addEventListener("submit", function (event) {
         window.location.href = "login.html";
         return;
     }
-    const ticket = {
-        title: document.getElementById("title").value,
-        description: document.getElementById("description").value,
-        priority: document.getElementById("priority").value,
-        state: "Nouveau",
-    };
 
-    if (ticket.title.trim() === "" || ticket.description.trim() === "") {
+    const title = document.getElementById("title").value;
+    const description = document.getElementById("description").value;
+    const priority = document.getElementById("priority").value;
+    const file = document.getElementById("image-attach").files[0];
+
+    if (title.trim() === "" || description.trim() === "") {
         document.getElementById("success-message").style.display = "none";
         document.getElementById("error-message").innerText = "Veuillez remplir tous les champs!";
         document.getElementById("error-message").style.display = "block";
@@ -36,37 +35,57 @@ document.querySelector("form").addEventListener("submit", function (event) {
         }, 4000);
         return;
     }
-    fetch("http://127.0.0.1:8000/submit-ticket", {
-        method: "POST",
-        headers: { "Content-type": "application/json", "Authorization": `Bearer ${currentToken}`},
-        body: JSON.stringify(ticket)
-    })
-        .then(response => {
 
-            if (response.status === 401) {
-                localStorage.removeItem("token");
-                window.location.href = "login.html?reason=expired";
-                return;
-            }
-            return response.json();
+    function sendTicket(imageBase64) {
+        const ticket = {
+            title: title,
+            description: description,
+            priority: priority,
+            state: "Nouveau",
+            image: imageBase64
+        };
+
+        fetch("http://127.0.0.1:8000/submit-ticket", {
+            method: "POST",
+            headers: { "Content-type": "application/json", "Authorization": `Bearer ${currentToken}` },
+            body: JSON.stringify(ticket)
         })
-        .then(data => {
-            console.log("Success", data);
-            document.getElementById("success-message").innerText = "Ticket soumis avec succès !";
-            document.getElementById("success-message").style.display = "block";
-            document.getElementById("error-message").innerText = "";
-            document.getElementById("error-message").style.display = "none";
-            document.querySelector("form").reset();
+            .then(response => {
+                if (response.status === 401) {
+                    localStorage.removeItem("token");
+                    window.location.href = "login.html?reason=expired";
+                    return;
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log("Success", data);
+                document.getElementById("success-message").innerText = "Ticket soumis avec succès !";
+                document.getElementById("success-message").style.display = "block";
+                document.getElementById("error-message").innerText = "";
+                document.getElementById("error-message").style.display = "none";
+                document.querySelector("form").reset();
 
-            setTimeout(() => {
+                setTimeout(() => {
+                    document.getElementById("success-message").style.display = "none";
+                }, 4000);
+            })
+            .catch(error => {
+                console.error("Error", error);
                 document.getElementById("success-message").style.display = "none";
-            }, 4000);
-        })
-        .catch(error =>{
-            console.error("Error", error);
-            document.getElementById("success-message").style.display = "none";
-            document.getElementById("error-message").innerText = "Une erreur s'est produite";
-            document.getElementById("error-message").style.display = "block";
-        });
+                document.getElementById("error-message").innerText = "Une erreur s'est produite";
+                document.getElementById("error-message").style.display = "block";
+            });
+    }
 
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function () {
+            const base64String = reader.result.split(",")[1]; // strip "data:image/png;base64," prefix
+            sendTicket(base64String);
+        };
+        reader.readAsDataURL(file);
+    } else {
+        sendTicket(null);
+    }
 });

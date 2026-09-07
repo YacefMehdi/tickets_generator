@@ -87,6 +87,30 @@ if (payloadObj.role === "admin") {
                     document.getElementById("details-id").innerText = ticket.id;
                     document.getElementById("details-title").innerText = ticket.title;
                     document.getElementById("details-description").innerText = ticket.description;
+                    fetch(`http://127.0.0.1:8000/ticket-image/${ticket.id}`, {
+                            method: "GET",
+                            headers: { "Content-type": "application/json", "Authorization": `Bearer ${token}` },
+                        })
+                        .then(response => {
+                            if (response.status === 401) {
+                                localStorage.removeItem("token");
+                                window.location.href = "login.html?reason=expired";
+                            } else {
+                                return response.json();
+                            }
+                        })
+                        .then(data => {
+                            console.log("Success", data);
+                            const imageElement = document.getElementById("ticket-image");
+                            if (data.image) {
+                            imageElement.src = `data:image/png;base64,${data.image}`;
+                            imageElement.style.display = "block";
+                        } else {
+                            imageElement.src = "";
+                            imageElement.style.display = "none";
+                        }
+                    })
+                    .catch(error => console.error("Error", error));
                     document.getElementById("details-priority").innerText = ticket.priority;
                     document.getElementById("details-date").innerText = ticket.timestamp;
                     document.getElementById("details-state").innerText = ticket.state;
@@ -221,11 +245,42 @@ fetch("http://127.0.0.1:8000/my-tickets", {
                     document.getElementById("details-id").innerText = ticket.id;
                     document.getElementById("details-title").innerText = ticket.title;
                     document.getElementById("details-description").innerText = ticket.description;
+                    fetch(`http://127.0.0.1:8000/ticket-image/${ticket.id}`, {
+                        method: "GET",
+                        headers: { "Content-type": "application/json", "Authorization": `Bearer ${token}` },
+                    })
+                    .then(response => {
+                        if (response.status === 401) {
+                            localStorage.removeItem("token");
+                            window.location.href = "login.html?reason=expired";
+                        } else {
+                            return response.json();
+                        }
+                    })
+                    .then(data => {
+                    console.log("Success", data);
+                    const imageElement = document.getElementById("ticket-image");
+                    if (data.image) {
+                        imageElement.src = `data:image/png;base64,${data.image}`;
+                        imageElement.style.display = "block";
+                    } else {
+                        imageElement.src = "";
+                        imageElement.style.display = "none";
+                    }
+                    })
+                    .catch(error => console.error("Error", error));
                     document.getElementById("details-priority").innerText = ticket.priority;
                     document.getElementById("details-date").innerText = ticket.timestamp;
                     document.getElementById("details-state").innerText = ticket.state;
-                    document.getElementById("details-note").innerText = ticket.note || "Aucune note pour le moment";
-                    document.getElementById("details-note").style.display = "inline";
+                    if (ticket.note) {
+                        document.getElementById("note-support").style.display = "block";
+                        document.getElementById("details-note").innerText = ticket.note;
+                        document.getElementById("details-note").style.display = "inline";
+                    } else {
+                        document.getElementById("note-support").style.display = "none";
+                        document.getElementById("details-note").innerText = "";
+                        document.getElementById("details-note").style.display = "none";
+                    }
                     modal.style.display = "flex";
                 });
                 ticketTableBody.appendChild(row);
