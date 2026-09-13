@@ -1,14 +1,17 @@
-from fastapi import FastAPI, Header, HTTPException
-from pydantic import BaseModel
-from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime
-import bcrypt
-import sqlite3
-import jwt
+import os
 from datetime import datetime, timedelta
 import base64
+import bcrypt
+import jwt
+from dotenv import load_dotenv
+from fastapi import FastAPI, Header, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from db import connect_db
 
-SECRET_KEY = "mon_super_secret_cle_a_changer"
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 
 app = FastAPI()
@@ -24,7 +27,7 @@ class Ticket(BaseModel):
     description: str
     priority: str
     state: str
-    image: str = None
+    image: str = ""
 
 @app.post("/submit-ticket")
 def submit_ticket(ticket: Ticket, authorization: str = Header(None)):
@@ -46,25 +49,26 @@ def submit_ticket(ticket: Ticket, authorization: str = Header(None)):
     if not ticket.title.strip() or not ticket.description.strip() or not ticket.priority.strip() or not ticket.state.strip():
         return {"status": "error", "message": "Veuillez remplir tous les champs obligatoires"}
 
-    conn = sqlite3.connect("users.db")
+    conn = connect_db()
     cursor = conn.cursor()
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS tickets (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT NOT NULL,
             title TEXT NOT NULL,
             description TEXT NOT NULL,
             priority TEXT NOT NULL,
-            timestamp TEXT NOT NULL,
-            state TEXT NOT NULL DEFAULT "Nouveau",
-            image BLOB
+            timestamp TIMESTAMP NOT NULL,
+            state TEXT NOT NULL DEFAULT 'Nouveau',
+            image BYTEA,
+            note TEXT
         )
     """)
     image_bytes = base64.b64decode(ticket.image) if ticket.image else None
     cursor.execute(
-        "INSERT INTO tickets (username, title, description, priority, timestamp, state, image) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        (username, ticket.title, ticket.description, ticket.priority, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Nouveau", image_bytes)
+        "INSERT INTO tickets (username, title, description, priority, timestamp, state, image, note) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
+        (username, ticket.title, ticket.description, ticket.priority, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "Nouveau", image_bytes, "")
     )
     conn.commit()
     conn.close()
@@ -85,13 +89,13 @@ def get_tickets(authorization: str = Header(None)):
         raise HTTPException(status_code=401, detail="Invalid token")
    
     username = payload["sub"]
-    conn = sqlite3.connect("users.db")
+    conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM tickets WHERE username = ?", (username,))
+    cursor.execute("SELECT * FROM tickets WHERE username = %s", (username,))
     rows = cursor.fetchall()  # raw tuples straight from the DB
     result = []               # the list of clean dicts you're building
     for row in rows:
-        result.append({"id": row[0], "username": row[1], "title": row[2], "description": row[3], "priority": row[4], "timestamp": row[5], "state": row[6], "note": row[7]})
+        result.append({"id": row[0], "username": row[1], "title": row[2], "description": row[3], "priority": row[4], "timestamp": row[5], "state": row[6], "note": row[8]})
     conn.close()
     return {"status": "received", "my_tickets": result}
 
@@ -105,18 +109,19 @@ def signup(user: User):
     if not user.username.strip() or not user.password.strip():
         return {"status": "error", "message": "Username and password cannot be empty"}
 
-    conn = sqlite3.connect("users.db")
+    conn = connect_db()
     cursor = conn.cursor()
 
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             username TEXT NOT NULL,
-            password TEXT NOT NULL
+            password TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'user'
         )
     """)
 
-    cursor.execute("SELECT * FROM users WHERE username = ?", (user.username,))
+    cursor.execute("SELECT * FROM users WHERE username = %s", (user.username,))
     existing_user = cursor.fetchone()
 
     if existing_user:
@@ -125,7 +130,7 @@ def signup(user: User):
 
     hashed_password = bcrypt.hashpw(user.password.encode(), bcrypt.gensalt()).decode()
 
-    cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (user.username, hashed_password))
+    cursor.execute("INSERT INTO users (username, password, role) VALUES (%s, %s, %s)", (user.username, hashed_password, "user"))
     conn.commit()
     conn.close()
 
@@ -133,10 +138,10 @@ def signup(user: User):
 
 @app.post("/login")
 def login(user: User):
-    conn = sqlite3.connect("users.db")
+    conn = connect_db()
     cursor = conn.cursor()
 
-    cursor.execute("SELECT * FROM users WHERE username = ?", (user.username,))
+    cursor.execute("SELECT * FROM users WHERE username = %s", (user.username,))
     row = cursor.fetchone()
     conn.close()
 
@@ -172,14 +177,14 @@ def get_all_tickets(authorization: str = Header(None)):
     if payload["role"] != "admin":
         raise HTTPException(status_code=403, detail="Unauthorized")
 
-    conn = sqlite3.connect("users.db")
+    conn = connect_db()
     cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM tickets")
     rows = cursor.fetchall()
     result = []
     for row in rows:
-        result.append({"id": row[0], "username": row[1], "title": row[2], "description": row[3], "priority": row[4], "timestamp": row[5], "state": row[6], "note": row[7]})
+        result.append({"id": row[0], "username": row[1], "title": row[2], "description": row[3], "priority": row[4], "timestamp": row[5], "state": row[6], "note": row[8]})
     conn.close()
     return {"status": "success", "all_tickets": result}
 
@@ -199,9 +204,9 @@ def change_state(ticket: dict, authorization: str = Header(None)):
     if payload["role"] != "admin":
         raise HTTPException(status_code=403, detail="Unauthorized")
 
-    conn = sqlite3.connect("users.db")
+    conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("UPDATE tickets SET state = ? WHERE id = ?", (ticket["state"], ticket["id"]))
+    cursor.execute("UPDATE tickets SET state = %s WHERE id = %s", (ticket["state"], ticket["id"]))
     conn.commit()
     conn.close()
     return {"status": "success", "message": "State changed successfully"}
@@ -222,9 +227,9 @@ def add_note(ticket: dict, authorization: str = Header(None)):
     if payload["role"] != "admin":
         raise HTTPException(status_code=403, detail="Unauthorized")
 
-    conn = sqlite3.connect("users.db")
+    conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("UPDATE tickets SET note = ? WHERE id = ?", (ticket["note"], ticket["id"]))
+    cursor.execute("UPDATE tickets SET note = %s WHERE id = %s", (ticket["note"], ticket["id"]))
     conn.commit()
     conn.close()
     return {"status": "success", "message": "Note added successfully"}
@@ -242,9 +247,9 @@ def get_image(id: int, authorization: str = Header(None)):
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
     
-    conn = sqlite3.connect("users.db")
+    conn = connect_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT image FROM tickets WHERE id = ?", (id,))
+    cursor.execute("SELECT image FROM tickets WHERE id = %s", (id,))
     row = cursor.fetchone()
     conn.close()
 
